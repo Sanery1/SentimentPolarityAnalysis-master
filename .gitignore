@@ -49,6 +49,11 @@ coverage.xml
 *,cover
 .hypothesis/
 
+# 项目特定：实验输出结果
+spa/f_runout/*.xls
+spa/f_runout/*.txt
+
+
 # Translations
 *.mo
 *.pot
