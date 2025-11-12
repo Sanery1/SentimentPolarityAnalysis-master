@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情感极性分析系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 90%;
+            padding: 50px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 3em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.3em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 18px;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .result-card.positive {
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            border-left-color: #28a745;
+        }
+
+        .result-card.negative {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-left-color: #dc3545;
+        }
+
+        .result-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+        }
+
+        .result-label {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .result-label.positive {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .result-label.negative {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .batch-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px dashed #ddd;
+        }
+
+        .batch-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .batch-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .batch-input button {
+            flex: 0 0 auto;
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .batch-list {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        .batch-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .batch-item button {
+            flex: 0 0 auto;
+            padding: 5px 12px;
+            background: #dc3545;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 1.2em;
+            padding: 20px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .examples {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .examples h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            textarea {
+                font-size: 16px;
+                min-height: 120px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 情感极性分析系统</h1>
+        <p class="subtitle">基于情感词典的中文文本情感分析</p>
+
+        <!-- 单句分析 -->
+        <div class="input-section">
+            <label for="textInput">📝 输入要分析的文本：</label>
+            <textarea 
+                id="textInput" 
+                placeholder="例如：味道很好，服务也不错..."
+            ></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="analyzeSentiment()">
+                🔍 分析情感
+            </button>
+            <button class="btn-secondary" onclick="clearResult()">
+                🔄 清除结果
+            </button>
+        </div>
+
+        <!-- 示例句子 -->
+        <div class="examples">
+            <h3>💡 快速示例</h3>
+            <span class="example-btn" onclick="fillExample('味道很好，服务也不错')">正面示例1</span>
+            <span class="example-btn" onclick="fillExample('太难吃了，再也不来了')">负面示例1</span>
+            <span class="example-btn" onclick="fillExample('要是米饭再多点儿就好了')">负面示例2</span>
+            <span class="example-btn" onclick="fillExample('非常满意，下次还会再来')">正面示例2</span>
+        </div>
+
+        <!-- 加载中 -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>正在分析中...</p>
+        </div>
+
+        <!-- 结果显示 -->
+        <div id="result" class="result-section">
+            <!-- 结果将动态插入这里 -->
+        </div>
+
+        <!-- 批量分析 -->
+        <div class="batch-section">
+            <h3 style="color: #667eea; margin-bottom: 15px;">📋 批量分析</h3>
+            <div class="batch-input">
+                <input 
+                    type="text" 
+                    id="batchInput" 
+                    placeholder="输入一句话，然后点击添加..."
+                    onkeypress="handleBatchEnter(event)"
+                >
+                <button onclick="addToBatch()">➕ 添加</button>
+            </div>
+            <ul id="batchList" class="batch-list"></ul>
+            <button class="btn-primary" onclick="batchAnalyze()" id="batchAnalyzeBtn" style="display: none;">
+                🚀 批量分析
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let batchTexts = [];
+
+        // 单句情感分析
+        async function analyzeSentiment() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (!text) {
+                alert('请输入要分析的文本！');
+                return;
+            }
+
+            // 显示加载中
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                // 隐藏加载中
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.success) {
+                    displayResult(data);
+                } else {
+                    alert('分析失败: ' + data.error);
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('请求失败: ' + error.message);
+            }
+        }
+
+        // 显示分析结果
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            const sentimentClass = data.sentiment === 1 ? 'positive' : 'negative';
+            
+            resultDiv.innerHTML = `
+                <div class="result-card ${sentimentClass}">
+                    <div class="result-text">
+                        <strong>分析文本：</strong>${data.text}
+                    </div>
+                    <div>
+                        <span class="result-label ${sentimentClass}">
+                            ${data.label}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.style.display = 'block';
+        }
+
+        // 清除结果
+        function clearResult() {
+            document.getElementById('textInput').value = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('result').innerHTML = '';
+        }
+
+        // 填充示例
+        function fillExample(text) {
+            document.getElementById('textInput').value = text;
+        }
+
+        // 添加到批量列表
+        function addToBatch() {
+            const input = document.getElementById('batchInput');
+            const text = input.value.trim();
+            
+            if (!text) {
+                alert('请输入文本！');
+                return;
+            }
+
+            batchTexts.push(text);
+            updateBatchList();
+            input.value = '';
+        }
+
+        // 处理回车键
+        function handleBatchEnter(event) {
+            if (event.key === 'Enter') {
+                addToBatch();
+            }
+        }
+
+        // 更新批量列表显示
+        function updateBatchList() {
+            const listElement = document.getElementById('batchList');
+            const btnElement = document.getElementById('batchAnalyzeBtn');
+            
+            listElement.innerHTML = '';
+            
+            if (batchTexts.length === 0) {
+                btnElement.style.display = 'none';
+                return;
+            }
+
+            btnElement.style.display = 'block';
+
+            batchTexts.forEach((text, index) => {
+                const li = document.createElement('li');
+                li.className = 'batch-item';
+                li.innerHTML = `
+                    <span>${index + 1}. ${text}</span>
+                    <button onclick="removeFromBatch(${index})">删除</button>
+                `;
+                listElement.appendChild(li);
+            });
+        }
+
+        // 从批量列表中移除
+        function removeFromBatch(index) {
+            batchTexts.splice(index, 1);
+            updateBatchList();
+        }
+
+        // 批量分析
+        async function batchAnalyze() {
+            if (batchTexts.length === 0) {
+                alert('请先添加要分析的文本！');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/batch_analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ texts: batchTexts })
+                });
+
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.success) {
+                    displayBatchResults(data.results);
+                } else {
+                    alert('批量分析失败: ' + data.error);
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('请求失败: ' + error.message);
+            }
+        }
+
+        // 显示批量分析结果
+        function displayBatchResults(results) {
+            const resultDiv = document.getElementById('result');
+            let html = '<h3 style="color: #667eea; margin-bottom: 15px;">批量分析结果</h3>';
+            
+            results.forEach((item, index) => {
+                const sentimentClass = item.sentiment === 1 ? 'positive' : 'negative';
+                html += `
+                    <div class="result-card ${sentimentClass}" style="margin-bottom: 15px;">
+                        <div class="result-text">
+                            <strong>${index + 1}. </strong>${item.text}
+                        </div>
+                        <div>
+                            <span class="result-label ${sentimentClass}">
+                                ${item.label} ${item.sentiment === 1 ? '😊' : '😞'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
